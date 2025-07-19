@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar, BookOpen, Bell, Users, Settings, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,20 +21,20 @@ const Dashboard = () => {
   ];
 
   const assignments = [
-    { id: 1, title: 'Data Structures Assignment', subject: 'CS 101', dueDate: '2024-07-22', priority: 'high', status: 'pending' },
-    { id: 2, title: 'Calculus Problem Set', subject: 'Math', dueDate: '2024-07-24', priority: 'medium', status: 'in-progress' },
-    { id: 3, title: 'Physics Lab Report', subject: 'Physics', dueDate: '2024-07-25', priority: 'low', status: 'completed' },
+    { id: 1, title: 'Data Structures Assignment', subject: 'CS 101', dueDate: '2024-07-22', priority: 'high' as const, status: 'pending' as const },
+    { id: 2, title: 'Calculus Problem Set', subject: 'Math', dueDate: '2024-07-24', priority: 'medium' as const, status: 'in-progress' as const },
+    { id: 3, title: 'Physics Lab Report', subject: 'Physics', dueDate: '2024-07-25', priority: 'low' as const, status: 'completed' as const },
   ];
 
   const recentNotices = [
-    { id: 1, title: 'Semester Schedule Update', type: 'academic', date: '2024-07-19', urgent: true },
-    { id: 2, title: 'Library Hours Extended', type: 'facility', date: '2024-07-18', urgent: false },
-    { id: 3, title: 'New Course Registration Open', type: 'registration', date: '2024-07-17', urgent: false },
+    { id: 1, title: 'Semester Schedule Update', type: 'academic' as const, date: '2024-07-19', urgent: true },
+    { id: 2, title: 'Library Hours Extended', type: 'facility' as const, date: '2024-07-18', urgent: false },
+    { id: 3, title: 'New Course Registration Open', type: 'registration' as const, date: '2024-07-17', urgent: false },
   ];
 
   const upcomingEvents = [
-    { id: 1, title: 'Tech Symposium', date: '2024-07-25', time: '10:00 AM', location: 'Main Auditorium', rsvpStatus: null },
-    { id: 2, title: 'Career Fair', date: '2024-07-30', time: '9:00 AM', location: 'Campus Center', rsvpStatus: 'attending' },
+    { id: 1, title: 'Tech Symposium', date: '2024-07-25', time: '10:00 AM', location: 'Main Auditorium', rsvpStatus: null as const },
+    { id: 2, title: 'Career Fair', date: '2024-07-30', time: '9:00 AM', location: 'Campus Center', rsvpStatus: 'attending' as const },
   ];
 
   const navigation = [
