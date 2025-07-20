@@ -1,48 +1,38 @@
 
 import React, { useState } from 'react';
-import { Calendar, BookOpen, Bell, Users, Settings, Shield, FileText, TrendingUp, GraduationCap, Brain } from 'lucide-react';
+import { Calendar, BookOpen, Bell, Users, Settings, Shield, FileText, TrendingUp, GraduationCap, Brain, LogOut } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { StudentDashboard } from '@/components/StudentDashboard';
+import { RealStudentDashboard } from '@/components/RealStudentDashboard';
 import { TeacherDashboard } from '@/components/TeacherDashboard';
 import { AdminDashboard } from '@/components/AdminDashboard';
+import { useAuth } from '@/hooks/useAuth';
 
-type UserRole = 'student' | 'teacher' | 'admin';
+interface Profile {
+  id: string;
+  name: string;
+  role: 'student' | 'teacher' | 'admin';
+  department?: string;
+  student_id?: string;
+  employee_id?: string;
+  is_active: boolean;
+}
 
-const Dashboard = () => {
-  const [userRole, setUserRole] = useState<UserRole>('student');
+interface DashboardProps {
+  userProfile: Profile | null;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
+  const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Enhanced sample data for comprehensive features
-  const studentData = {
-    upcomingClasses: [
-      { id: 1, subject: 'Computer Science 101', time: '9:00 AM', room: 'Room A-101', professor: 'Dr. Smith', color: 'bg-blue-500' },
-      { id: 2, subject: 'Mathematics', time: '11:00 AM', room: 'Room B-205', professor: 'Prof. Johnson', color: 'bg-green-500' },
-      { id: 3, subject: 'Physics Lab', time: '2:00 PM', room: 'Lab C-301', professor: 'Dr. Brown', color: 'bg-purple-500' },
-    ],
-    assignments: [
-      { id: 1, title: 'Data Structures Assignment', subject: 'CS 101', dueDate: '2024-07-22', priority: 'high' as const, status: 'pending' as const },
-      { id: 2, title: 'Calculus Problem Set', subject: 'Math', dueDate: '2024-07-24', priority: 'medium' as const, status: 'in-progress' as const },
-      { id: 3, title: 'Physics Lab Report', subject: 'Physics', dueDate: '2024-07-25', priority: 'low' as const, status: 'completed' as const },
-    ],
-    notices: [
-      { id: 1, title: 'Semester Schedule Update', type: 'academic' as const, date: '2024-07-19', urgent: true },
-      { id: 2, title: 'Library Hours Extended', type: 'facility' as const, date: '2024-07-18', urgent: false },
-      { id: 3, title: 'New Course Registration Open', type: 'registration' as const, date: '2024-07-17', urgent: false },
-    ],
-    events: [
-      { id: 1, title: 'Tech Symposium', date: '2024-07-25', time: '10:00 AM', location: 'Main Auditorium', rsvpStatus: null },
-      { id: 2, title: 'Career Fair', date: '2024-07-30', time: '9:00 AM', location: 'Campus Center', rsvpStatus: 'attending' as const },
-    ],
-    exams: [
-      { id: 1, title: 'Midterm - Computer Science', date: '2024-07-28', time: '2:00 PM', duration: '2 hours', room: 'Exam Hall A' },
-      { id: 2, title: 'Mathematics Quiz', date: '2024-07-26', time: '10:00 AM', duration: '1 hour', room: 'Room B-205' },
-    ]
-  };
+  if (!userProfile) {
+    return <div>Loading profile...</div>;
+  }
 
   const getNavigation = () => {
-    switch (userRole) {
+    switch (userProfile.role) {
       case 'student':
         return [
           { id: 'overview', label: 'Overview', icon: Calendar },
@@ -79,12 +69,12 @@ const Dashboard = () => {
   };
 
   const renderDashboard = () => {
-    switch (userRole) {
+    switch (userProfile.role) {
       case 'student':
         return (
-          <StudentDashboard
+          <RealStudentDashboard
             activeTab={activeTab}
-            data={studentData}
+            userId={userProfile.id}
           />
         );
       case 'teacher':
@@ -96,7 +86,7 @@ const Dashboard = () => {
     }
   };
 
-  const getRoleColor = (role: UserRole) => {
+  const getRoleColor = (role: string) => {
     switch (role) {
       case 'student': return 'default';
       case 'teacher': return 'secondary';
@@ -109,7 +99,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Enhanced Header */}
+      {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -117,40 +107,24 @@ const Dashboard = () => {
               <div className="flex items-center gap-2">
                 <Brain className="h-8 w-8 text-primary" />
                 <div>
-                  <h1 className="text-2xl font-bold text-primary">Campus Copilot</h1>
+                  <h1 className="text-2xl font-bold text-primary">CampusConnect</h1>
                   <p className="text-xs text-muted-foreground hidden sm:block">Smart Academic Assistant</p>
                 </div>
               </div>
-              <Badge variant={getRoleColor(userRole)} className="flex items-center gap-1">
-                {userRole === 'admin' && <Shield className="h-3 w-3" />}
-                {userRole === 'teacher' && <GraduationCap className="h-3 w-3" />}
-                {userRole === 'student' && <BookOpen className="h-3 w-3" />}
-                {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant={getRoleColor(userProfile.role)} className="flex items-center gap-1">
+                  {userProfile.role === 'admin' && <Shield className="h-3 w-3" />}
+                  {userProfile.role === 'teacher' && <GraduationCap className="h-3 w-3" />}
+                  {userProfile.role === 'student' && <BookOpen className="h-3 w-3" />}
+                  {userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Welcome, {userProfile.name}
+                </span>
+              </div>
             </div>
             
-            {/* Enhanced Role Switcher */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex gap-1 p-1 bg-muted rounded-lg">
-                {(['student', 'teacher', 'admin'] as UserRole[]).map((role) => (
-                  <Button
-                    key={role}
-                    variant={userRole === role ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => {
-                      setUserRole(role);
-                      setActiveTab('overview');
-                    }}
-                    className="capitalize flex items-center gap-1"
-                  >
-                    {role === 'admin' && <Shield className="h-3 w-3" />}
-                    {role === 'teacher' && <GraduationCap className="h-3 w-3" />}
-                    {role === 'student' && <BookOpen className="h-3 w-3" />}
-                    <span className="hidden sm:inline">{role}</span>
-                  </Button>
-                ))}
-              </div>
-              
+            <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" className="hidden md:flex">
                 <Bell className="h-4 w-4 mr-1" />
                 <span className="hidden lg:inline">Notifications</span>
@@ -159,6 +133,10 @@ const Dashboard = () => {
                 <Settings className="h-4 w-4 mr-1" />
                 <span className="hidden lg:inline">Settings</span>
               </Button>
+              <Button variant="outline" size="sm" onClick={signOut}>
+                <LogOut className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -166,7 +144,7 @@ const Dashboard = () => {
 
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Enhanced Sidebar Navigation */}
+          {/* Sidebar Navigation */}
           <aside className="lg:w-64">
             <Card className="sticky top-24">
               <CardContent className="p-4">
