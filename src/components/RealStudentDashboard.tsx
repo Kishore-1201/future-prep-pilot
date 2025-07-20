@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,7 +54,10 @@ export const RealStudentDashboard: React.FC<RealStudentDashboardProps> = ({ acti
       // Fetch class schedules
       const { data: schedulesData } = await supabase
         .from('class_schedules')
-        .select('*, teacher:teacher_id(name)')
+        .select(`
+          *,
+          teacher:profiles!class_schedules_teacher_id_fkey(name)
+        `)
         .eq('student_id', userId);
 
       setAssignments(assignmentsData || []);
