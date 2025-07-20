@@ -70,6 +70,7 @@ export const useAuth = () => {
       }
 
       console.log('Profile fetched successfully:', data);
+      console.log('User role from database:', data.role);
       setProfile(data);
     } catch (error) {
       console.error('Error in fetchProfile:', error);
@@ -85,10 +86,13 @@ export const useAuth = () => {
       const email = userData?.user?.email || '';
       const userMetadata = userData?.user?.user_metadata || {};
       
-      // Get role from metadata, with proper fallback
+      console.log('User metadata:', userMetadata);
+      
+      // Get role from metadata, checking multiple possible fields
       let role: 'student' | 'teacher' | 'admin' = 'student';
-      if (userMetadata.role && ['student', 'teacher', 'admin'].includes(userMetadata.role)) {
-        role = userMetadata.role as 'student' | 'teacher' | 'admin';
+      const possibleRole = userMetadata.role || userMetadata.user_role;
+      if (possibleRole && ['student', 'teacher', 'admin'].includes(possibleRole)) {
+        role = possibleRole as 'student' | 'teacher' | 'admin';
       }
 
       // Get name from metadata or email
@@ -98,11 +102,13 @@ export const useAuth = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .insert({
+        .upsert({
           id: userId,
           name: name,
           role: role,
           is_active: true
+        }, {
+          onConflict: 'id'
         })
         .select()
         .single();

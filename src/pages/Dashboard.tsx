@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Calendar, BookOpen, Bell, Users, Settings, Shield, FileText, TrendingUp, GraduationCap, Brain, LogOut } from 'lucide-react';
+import { Calendar, BookOpen, Bell, Users, Settings, Shield, FileText, TrendingUp, GraduationCap, Brain, LogOut, Building2, Building } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -69,6 +69,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
         return [
           { id: 'overview', label: 'Overview', icon: Calendar },
           { id: 'users', label: 'User Management', icon: Users },
+          { id: 'colleges', label: 'Colleges', icon: Building },
+          { id: 'departments', label: 'Departments', icon: Building2 },
           { id: 'courses', label: 'Courses', icon: BookOpen },
           { id: 'events', label: 'Campus Events', icon: Calendar },
           { id: 'notices', label: 'Global Notices', icon: Bell },

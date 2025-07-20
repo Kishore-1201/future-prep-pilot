@@ -43,18 +43,23 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
         console.log('Attempting signup for:', email, 'with role:', role);
         
         // Make sure we pass the role in the metadata correctly
-        const { data, error } = await supabase.auth.signUp({
+        const signupData = {
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
               name: name,
-              role: role, // This should be passed to the trigger
-              full_name: name
+              role: role,
+              full_name: name,
+              user_role: role // Additional field for the trigger
             }
           }
-        });
+        };
+        
+        console.log('Signup data being sent:', signupData);
+        
+        const { data, error } = await supabase.auth.signUp(signupData);
         
         if (error) {
           console.error('Signup error:', error);
@@ -104,15 +109,19 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
           name: userName,
           role: userRole,
           is_active: true
+        }, {
+          onConflict: 'id'
         });
 
       if (error) {
         console.error('Error creating profile:', error);
+        throw error;
       } else {
         console.log('Profile created successfully with role:', userRole);
       }
     } catch (error) {
       console.error('Error in createUserProfile:', error);
+      // Don't throw here to prevent blocking the auth flow
     }
   };
 
@@ -154,7 +163,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
           data: {
             name: demoName,
             role: demoRole,
-            full_name: demoName
+            full_name: demoName,
+            user_role: demoRole // Additional field for the trigger
           }
         }
       });
@@ -331,7 +341,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
             Continue with Google
           </Button>
 
-          <div className="text-center">
+          <div className="text-center space-y-3">
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
@@ -340,82 +350,59 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>
+            
+            {isLogin && (
+              <div className="pt-3 border-t space-y-3">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">New to the platform?</p>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsLogin(false)}
+                      className="block w-full text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                    >
+                      👨‍🎓 Create Student/Teacher Account
+                    </button>
+                    <a 
+                      href="/register-college-admin"
+                      className="block w-full text-sm text-green-600 hover:text-green-800 hover:underline font-medium"
+                    >
+                      🏛️ Register Your College
+                    </a>
+                  </div>
+                </div>
+                
+                <div className="pt-2 border-t">
+                  <p className="text-xs text-muted-foreground mb-2">Quick Demo Access:</p>
+                  <div className="grid grid-cols-3 gap-1 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => fillDemoCredentials('student')}
+                      className="px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100"
+                    >
+                      Student
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fillDemoCredentials('teacher')}
+                      className="px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100"
+                    >
+                      Teacher
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fillDemoCredentials('admin')}
+                      className="px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100"
+                    >
+                      Admin
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {isLogin && (
-            <div className="space-y-3">
-              <div className="text-xs text-muted-foreground text-center">
-                <p className="font-semibold mb-2">Quick Demo Access:</p>
-              </div>
-              <div className="space-y-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full text-xs"
-                  onClick={() => createDemoAccount('student')}
-                  disabled={loading}
-                >
-                  Login as Demo Student
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full text-xs"
-                  onClick={() => createDemoAccount('teacher')}
-                  disabled={loading}
-                >
-                  Login as Demo Teacher
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full text-xs"
-                  onClick={() => createDemoAccount('admin')}
-                  disabled={loading}
-                >
-                  Login as Demo Admin
-                </Button>
-              </div>
-              <div className="text-xs text-muted-foreground text-center">
-                <p className="mt-2">Or fill credentials manually:</p>
-              </div>
-              <div className="space-y-2">
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full text-xs"
-                  onClick={() => fillDemoCredentials('student')}
-                  disabled={loading}
-                >
-                  Fill Student: student@campus.edu
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full text-xs"
-                  onClick={() => fillDemoCredentials('teacher')}
-                  disabled={loading}
-                >
-                  Fill Teacher: teacher@campus.edu
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full text-xs"
-                  onClick={() => fillDemoCredentials('admin')}
-                  disabled={loading}
-                >
-                  Fill Admin: admin@campus.edu
-                </Button>
-              </div>
-            </div>
-          )}
+
         </CardContent>
       </Card>
     </div>
