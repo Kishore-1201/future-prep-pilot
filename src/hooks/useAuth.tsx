@@ -52,7 +52,6 @@ export const useAuth = () => {
     try {
       console.log('Fetching profile for user:', userId);
       
-      // Use maybeSingle() instead of single() to handle cases where profile doesn't exist
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -66,7 +65,6 @@ export const useAuth = () => {
 
       if (!data) {
         console.log('No profile found, creating one...');
-        // If no profile exists, create one with default values
         await createDefaultProfile(userId);
         return;
       }
@@ -75,7 +73,6 @@ export const useAuth = () => {
       setProfile(data);
     } catch (error) {
       console.error('Error in fetchProfile:', error);
-      // If profile fetch fails, try to create a default profile
       await createDefaultProfile(userId);
     } finally {
       setLoading(false);
@@ -86,17 +83,25 @@ export const useAuth = () => {
     try {
       const { data: userData } = await supabase.auth.getUser();
       const email = userData?.user?.email || '';
-      const name = userData?.user?.user_metadata?.name || email.split('@')[0] || 'User';
-      const role = userData?.user?.user_metadata?.role || 'student';
+      const userMetadata = userData?.user?.user_metadata || {};
+      
+      // Get role from metadata, with proper fallback
+      let role: 'student' | 'teacher' | 'admin' = 'student';
+      if (userMetadata.role && ['student', 'teacher', 'admin'].includes(userMetadata.role)) {
+        role = userMetadata.role as 'student' | 'teacher' | 'admin';
+      }
 
-      console.log('Creating default profile for:', email);
+      // Get name from metadata or email
+      const name = userMetadata.name || userMetadata.full_name || email.split('@')[0] || 'User';
+
+      console.log('Creating profile with role:', role, 'for user:', email);
 
       const { data, error } = await supabase
         .from('profiles')
         .insert({
           id: userId,
           name: name,
-          role: role as 'student' | 'teacher' | 'admin',
+          role: role,
           is_active: true
         })
         .select()
@@ -107,10 +112,10 @@ export const useAuth = () => {
         throw error;
       }
 
-      console.log('Default profile created:', data);
+      console.log('Profile created successfully:', data);
       setProfile(data);
     } catch (error) {
-      console.error('Failed to create default profile:', error);
+      console.error('Failed to create profile:', error);
       // Set a minimal profile to prevent infinite loading
       setProfile({
         id: userId,

@@ -40,15 +40,18 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
         console.log('Login successful:', data.user?.email);
         toast.success('Successfully logged in!');
       } else {
-        console.log('Attempting signup for:', email);
+        console.log('Attempting signup for:', email, 'with role:', role);
+        
+        // Make sure we pass the role in the metadata correctly
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
-              name,
-              role,
+              name: name,
+              role: role, // This should be passed to the trigger
+              full_name: name
             }
           }
         });
@@ -58,14 +61,21 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
           throw error;
         }
         
-        console.log('Signup successful:', data.user?.email);
-        toast.success('Account created successfully!');
+        console.log('Signup successful:', data.user?.email, 'Role should be:', role);
+        
+        // If user is immediately confirmed, create profile manually to ensure correct role
+        if (data.user && !data.user.email_confirmed_at) {
+          toast.success('Account created! Please check your email to confirm your account.');
+        } else if (data.user) {
+          // User is auto-confirmed, let's make sure the profile has the correct role
+          await createUserProfile(data.user.id, name, role);
+          toast.success('Account created successfully!');
+        }
       }
       onAuthSuccess();
     } catch (error: any) {
       console.error('Auth error:', error);
       
-      // Provide specific error messages
       let errorMessage = 'Authentication failed';
       if (error.message?.includes('Invalid login credentials')) {
         errorMessage = 'Invalid email or password. Please check your credentials.';
@@ -80,6 +90,29 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       toast.error(errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createUserProfile = async (userId: string, userName: string, userRole: 'student' | 'teacher' | 'admin') => {
+    try {
+      console.log('Creating profile for user:', userId, 'with role:', userRole);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          name: userName,
+          role: userRole,
+          is_active: true
+        });
+
+      if (error) {
+        console.error('Error creating profile:', error);
+      } else {
+        console.log('Profile created successfully with role:', userRole);
+      }
+    } catch (error) {
+      console.error('Error in createUserProfile:', error);
     }
   };
 
@@ -100,6 +133,81 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
     } catch (error) {
       console.error('Google auth error:', error);
       toast.error('Google authentication failed');
+    }
+  };
+
+  const createDemoAccount = async (demoRole: 'student' | 'teacher' | 'admin') => {
+    const demoEmail = `${demoRole}@campus.edu`;
+    const demoPassword = `${demoRole}123`;
+    const demoName = `Demo ${demoRole.charAt(0).toUpperCase() + demoRole.slice(1)}`;
+
+    try {
+      console.log('Creating demo account:', demoEmail, 'with role:', demoRole);
+      setLoading(true);
+
+      // First, try to sign up the demo user
+      const { data, error } = await supabase.auth.signUp({
+        email: demoEmail,
+        password: demoPassword,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            name: demoName,
+            role: demoRole,
+            full_name: demoName
+          }
+        }
+      });
+
+      if (error && !error.message?.includes('User already registered')) {
+        throw error;
+      }
+
+      // If user already exists or was just created, try to sign in
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: demoEmail,
+        password: demoPassword,
+      });
+
+      if (signInError) {
+        // If sign in fails, the account might not exist, so let's create it
+        console.log('Demo account might not exist, creating it...');
+        toast.info(`Creating demo ${demoRole} account...`);
+        
+        // Wait a moment and try again
+        setTimeout(async () => {
+          try {
+            const { error: retryError } = await supabase.auth.signInWithPassword({
+              email: demoEmail,
+              password: demoPassword,
+            });
+            
+            if (retryError) {
+              toast.error(`Demo ${demoRole} account not available. Please create a regular account.`);
+            } else {
+              toast.success(`Logged in as demo ${demoRole}!`);
+              onAuthSuccess();
+            }
+          } catch (err) {
+            toast.error(`Failed to access demo ${demoRole} account`);
+          }
+          setLoading(false);
+        }, 2000);
+        return;
+      }
+
+      // Ensure the profile has the correct role
+      if (signInData.user) {
+        await createUserProfile(signInData.user.id, demoName, demoRole);
+        toast.success(`Logged in as demo ${demoRole}!`);
+        onAuthSuccess();
+      }
+
+    } catch (error: any) {
+      console.error(`Error with demo ${demoRole} account:`, error);
+      toast.error(`Failed to access demo ${demoRole} account: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -168,16 +276,24 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
             </div>
 
             {!isLogin && (
-              <Select value={role} onValueChange={(value: 'student' | 'teacher' | 'admin') => setRole(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="teacher">Teacher</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <Select value={role} onValueChange={(value: 'student' | 'teacher' | 'admin') => {
+                  setRole(value);
+                  console.log('Role selected:', value);
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="teacher">Teacher</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Selected role: <span className="font-semibold capitalize">{role}</span>
+                </p>
+              </div>
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
@@ -204,6 +320,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
             variant="outline" 
             className="w-full"
             onClick={handleGoogleAuth}
+            disabled={loading}
           >
             <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
               <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -219,6 +336,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
               type="button"
               onClick={() => setIsLogin(!isLogin)}
               className="text-sm text-primary hover:underline"
+              disabled={loading}
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>
@@ -227,7 +345,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
           {isLogin && (
             <div className="space-y-3">
               <div className="text-xs text-muted-foreground text-center">
-                <p className="font-semibold mb-2">Demo Accounts (Click to fill):</p>
+                <p className="font-semibold mb-2">Quick Demo Access:</p>
               </div>
               <div className="space-y-2">
                 <Button 
@@ -235,27 +353,65 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
                   variant="outline" 
                   size="sm" 
                   className="w-full text-xs"
-                  onClick={() => fillDemoCredentials('student')}
+                  onClick={() => createDemoAccount('student')}
+                  disabled={loading}
                 >
-                  Student: student@campus.edu / student123
+                  Login as Demo Student
                 </Button>
                 <Button 
                   type="button" 
                   variant="outline" 
+                  size="sm" 
+                  className="w-full text-xs"
+                  onClick={() => createDemoAccount('teacher')}
+                  disabled={loading}
+                >
+                  Login as Demo Teacher
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full text-xs"
+                  onClick={() => createDemoAccount('admin')}
+                  disabled={loading}
+                >
+                  Login as Demo Admin
+                </Button>
+              </div>
+              <div className="text-xs text-muted-foreground text-center">
+                <p className="mt-2">Or fill credentials manually:</p>
+              </div>
+              <div className="space-y-2">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full text-xs"
+                  onClick={() => fillDemoCredentials('student')}
+                  disabled={loading}
+                >
+                  Fill Student: student@campus.edu
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
                   size="sm" 
                   className="w-full text-xs"
                   onClick={() => fillDemoCredentials('teacher')}
+                  disabled={loading}
                 >
-                  Teacher: teacher@campus.edu / teacher123
+                  Fill Teacher: teacher@campus.edu
                 </Button>
                 <Button 
                   type="button" 
-                  variant="outline" 
+                  variant="ghost" 
                   size="sm" 
                   className="w-full text-xs"
                   onClick={() => fillDemoCredentials('admin')}
+                  disabled={loading}
                 >
-                  Admin: admin@campus.edu / admin123
+                  Fill Admin: admin@campus.edu
                 </Button>
               </div>
             </div>
