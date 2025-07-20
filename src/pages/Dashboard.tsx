@@ -27,8 +27,20 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
+  // Show loading state if profile is still null
   if (!userProfile) {
-    return <div>Loading profile...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <Brain className="h-12 w-12 text-primary mx-auto animate-pulse" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <div className="space-y-2">
+            <p className="text-lg font-semibold">CampusConnect</p>
+            <p className="text-muted-foreground">Setting up your profile...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const getNavigation = () => {
@@ -82,7 +94,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
       case 'admin':
         return <AdminDashboard activeTab={activeTab} />;
       default:
-        return null;
+        return (
+          <div className="text-center p-8">
+            <p className="text-muted-foreground">Role not recognized. Please contact support.</p>
+          </div>
+        );
     }
   };
 

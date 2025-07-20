@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Mail, Lock, User, LogIn, UserPlus } from 'lucide-react';
+import { Mail, Lock, User, LogIn, UserPlus, Brain } from 'lucide-react';
 
 interface AuthFormProps {
   onAuthSuccess: () => void;
@@ -26,29 +26,58 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log('Attempting login for:', email);
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (error) throw error;
+        
+        if (error) {
+          console.error('Login error:', error);
+          throw error;
+        }
+        
+        console.log('Login successful:', data.user?.email);
         toast.success('Successfully logged in!');
       } else {
-        const { error } = await supabase.auth.signUp({
+        console.log('Attempting signup for:', email);
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
+            emailRedirectTo: `${window.location.origin}/`,
             data: {
               name,
               role,
             }
           }
         });
-        if (error) throw error;
+        
+        if (error) {
+          console.error('Signup error:', error);
+          throw error;
+        }
+        
+        console.log('Signup successful:', data.user?.email);
         toast.success('Account created successfully!');
       }
       onAuthSuccess();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Authentication failed');
+    } catch (error: any) {
+      console.error('Auth error:', error);
+      
+      // Provide specific error messages
+      let errorMessage = 'Authentication failed';
+      if (error.message?.includes('Invalid login credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and confirm your account.';
+      } else if (error.message?.includes('User already registered')) {
+        errorMessage = 'An account with this email already exists. Please try logging in.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -56,6 +85,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
 
   const handleGoogleAuth = async () => {
     try {
+      console.log('Attempting Google OAuth...');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -68,18 +98,32 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       });
       if (error) throw error;
     } catch (error) {
+      console.error('Google auth error:', error);
       toast.error('Google authentication failed');
     }
+  };
+
+  const fillDemoCredentials = (userType: 'student' | 'teacher' | 'admin') => {
+    setEmail(`${userType}@campus.edu`);
+    setPassword(`${userType}123`);
+    setIsLogin(true);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-primary">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Brain className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="text-2xl font-bold text-primary">CampusConnect</h1>
+              <p className="text-xs text-muted-foreground">Smart Academic Assistant</p>
+            </div>
+          </div>
+          <CardTitle className="text-xl">
             {isLogin ? 'Welcome Back' : 'Join CampusConnect'}
           </CardTitle>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {isLogin ? 'Sign in to your account' : 'Create your account'}
           </p>
         </CardHeader>
@@ -181,11 +225,39 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
           </div>
 
           {isLogin && (
-            <div className="text-xs text-muted-foreground space-y-1">
-              <p><strong>Demo Accounts:</strong></p>
-              <p>Student: student@campus.edu / student123</p>
-              <p>Teacher: teacher@campus.edu / teacher123</p>
-              <p>Admin: admin@campus.edu / admin123</p>
+            <div className="space-y-3">
+              <div className="text-xs text-muted-foreground text-center">
+                <p className="font-semibold mb-2">Demo Accounts (Click to fill):</p>
+              </div>
+              <div className="space-y-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full text-xs"
+                  onClick={() => fillDemoCredentials('student')}
+                >
+                  Student: student@campus.edu / student123
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full text-xs"
+                  onClick={() => fillDemoCredentials('teacher')}
+                >
+                  Teacher: teacher@campus.edu / teacher123
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full text-xs"
+                  onClick={() => fillDemoCredentials('admin')}
+                >
+                  Admin: admin@campus.edu / admin123
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

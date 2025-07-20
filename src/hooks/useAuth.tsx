@@ -21,6 +21,7 @@ export const useAuth = () => {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session?.user?.email);
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
@@ -31,9 +32,13 @@ export const useAuth = () => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session?.user?.email);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        // Use setTimeout to prevent potential deadlocks
+        setTimeout(() => {
+          fetchProfile(session.user.id);
+        }, 0);
       } else {
         setProfile(null);
         setLoading(false);
@@ -45,23 +50,84 @@ export const useAuth = () => {
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
+      
+      // Use maybeSingle() instead of single() to handle cases where profile doesn't exist
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
+
+      if (!data) {
+        console.log('No profile found, creating one...');
+        // If no profile exists, create one with default values
+        await createDefaultProfile(userId);
+        return;
+      }
+
+      console.log('Profile fetched successfully:', data);
       setProfile(data);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error in fetchProfile:', error);
+      // If profile fetch fails, try to create a default profile
+      await createDefaultProfile(userId);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createDefaultProfile = async (userId: string) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const email = userData?.user?.email || '';
+      const name = userData?.user?.user_metadata?.name || email.split('@')[0] || 'User';
+      const role = userData?.user?.user_metadata?.role || 'student';
+
+      console.log('Creating default profile for:', email);
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          name: name,
+          role: role as 'student' | 'teacher' | 'admin',
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating profile:', error);
+        throw error;
+      }
+
+      console.log('Default profile created:', data);
+      setProfile(data);
+    } catch (error) {
+      console.error('Failed to create default profile:', error);
+      // Set a minimal profile to prevent infinite loading
+      setProfile({
+        id: userId,
+        name: 'User',
+        role: 'student',
+        is_active: true
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const signOut = async () => {
+    console.log('Signing out...');
     await supabase.auth.signOut();
+    setProfile(null);
+    setUser(null);
   };
 
   return {
