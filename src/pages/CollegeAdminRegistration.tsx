@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Building, Mail, Phone, Globe, MapPin, User, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,15 +50,17 @@ export const CollegeAdminRegistration: React.FC = () => {
     try {
       console.log('Starting college admin registration...');
       
-      // First, create the user account
+      // CRITICAL: Create user with proper metadata for college admin
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.admin_email,
         password: formData.admin_password,
         options: {
           data: {
             name: formData.admin_name,
-            role: 'student', // Temporary role
-            college_request: true
+            role: 'admin', // Set as admin role
+            detailed_role: 'college_admin', // Specific detailed role
+            college_request: true, // Flag for college admin request
+            full_name: formData.admin_name
           }
         }
       });

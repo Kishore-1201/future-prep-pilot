@@ -24,7 +24,7 @@ const ProtectedRoute: React.FC<{
   requiredDetailedRole?: string;
   allowPending?: boolean;
 }> = ({ children, requiredRole, requiredDetailedRole, allowPending = false }) => {
-  const { user, profile, loading, isPendingApproval } = useAuth();
+  const { user, profile, loading, isPendingApproval, isCollegeAdminPending } = useAuth();
 
   if (loading) {
     return (
@@ -45,7 +45,18 @@ const ProtectedRoute: React.FC<{
     return <Navigate to="/login" replace />;
   }
 
+  // CRITICAL: Handle college admin pending approval
+  if (isCollegeAdminPending && !allowPending) {
+    return <Navigate to="/pending-approval" replace />;
+  }
+
+  // Handle other pending approvals
   if (isPendingApproval && !allowPending) {
+    return <Navigate to="/pending-approval" replace />;
+  }
+
+  // CRITICAL: Block inactive users
+  if (profile && !profile.is_active && !allowPending) {
     return <Navigate to="/pending-approval" replace />;
   }
 
@@ -66,8 +77,13 @@ const AppRoutes = () => {
   const getDashboardRoute = () => {
     if (!profile) return '/login';
     
-    // Handle pending approval
-    if (profile.pending_approval) {
+    // CRITICAL: Handle college admin pending approval
+    if (profile.detailed_role === 'college_admin' && profile.pending_approval) {
+      return '/pending-approval';
+    }
+    
+    // Handle any pending approval
+    if (profile.pending_approval || !profile.is_active) {
       return '/pending-approval';
     }
     
@@ -76,8 +92,8 @@ const AppRoutes = () => {
       return '/super-admin';
     }
     
-    // College Admin (admin with college_id)
-    if (profile.detailed_role === 'college_admin') {
+    // College Admin (admin with college_id) - MUST be approved
+    if (profile.detailed_role === 'college_admin' && profile.college_id && !profile.pending_approval) {
       return '/college-admin';
     }
 

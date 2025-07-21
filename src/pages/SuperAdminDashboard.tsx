@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Users, Building, Shield, CheckCircle, XCircle, Clock, 
@@ -89,13 +88,20 @@ export const SuperAdminDashboard: React.FC = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('Not authenticated');
 
+      console.log('Approving college admin request:', requestId);
+
+      // Use the updated approval function
       const { data, error } = await supabase.rpc('approve_college_admin_request', {
         request_id: requestId,
         approver_id: userData.user.id
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Approval error:', error);
+        throw error;
+      }
       
+      console.log('Approval successful:', data);
       toast.success('College admin request approved successfully');
       fetchRequests();
       fetchStats();
