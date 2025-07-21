@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, Building, Shield, CheckCircle, XCircle, Clock, 
-  Search, Filter, Eye, UserCheck, UserX, AlertTriangle
+  Search, Filter, Eye, UserCheck, UserX, AlertTriangle, LogOut
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface CollegeAdminRequest {
   id: string;
@@ -40,6 +41,7 @@ interface SystemStats {
 }
 
 export const SuperAdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState<CollegeAdminRequest[]>([]);
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [loading, setLoading] = useState(false);
@@ -85,15 +87,11 @@ export const SuperAdminDashboard: React.FC = () => {
 
   const handleApproveRequest = async (requestId: string) => {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error('Not authenticated');
-
       console.log('Approving college admin request:', requestId);
 
-      // Use the updated approval function
+      // Use the simpler approval function
       const { data, error } = await supabase.rpc('approve_college_admin_request', {
-        request_id: requestId,
-        approver_id: userData.user.id
+        request_id: requestId
       });
 
       if (error) {
@@ -101,10 +99,16 @@ export const SuperAdminDashboard: React.FC = () => {
         throw error;
       }
       
-      console.log('Approval successful:', data);
-      toast.success('College admin request approved successfully');
-      fetchRequests();
-      fetchStats();
+      console.log('Approval result:', data);
+      
+      // The function returns true on success
+      if (data === true) {
+        toast.success('College admin approved successfully!');
+        fetchRequests();
+        fetchStats();
+      } else {
+        throw new Error('Failed to approve request');
+      }
     } catch (error: any) {
       console.error('Error approving request:', error);
       toast.error(error.message || 'Failed to approve request');
@@ -114,15 +118,19 @@ export const SuperAdminDashboard: React.FC = () => {
   const handleRejectRequest = async (requestId: string) => {
     try {
       const { data, error } = await supabase.rpc('reject_college_admin_request', {
-        request_id: requestId,
-        rejection_reason: 'Rejected by super admin'
+        request_id: requestId
       });
 
       if (error) throw error;
 
-      toast.success('Request rejected');
-      fetchRequests();
-      fetchStats();
+      // The function returns true on success
+      if (data === true) {
+        toast.success('College admin request rejected');
+        fetchRequests();
+        fetchStats();
+      } else {
+        throw new Error('Failed to reject request');
+      }
     } catch (error: any) {
       console.error('Error rejecting request:', error);
       toast.error(error.message || 'Failed to reject request');
@@ -160,10 +168,24 @@ export const SuperAdminDashboard: React.FC = () => {
           <h1 className="text-3xl font-bold">Super Admin Dashboard</h1>
           <p className="text-muted-foreground">Manage the entire CampusConnect platform</p>
         </div>
-        <Badge variant="destructive" className="text-sm">
-          <Shield className="h-4 w-4 mr-1" />
-          Super Admin
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Badge variant="destructive" className="text-sm">
+            <Shield className="h-4 w-4 mr-1" />
+            Super Admin
+          </Badge>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              navigate('/login');
+              toast.success('Logged out successfully');
+            }}
+          >
+            <LogOut className="h-4 w-4 mr-1" />
+            Logout
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">

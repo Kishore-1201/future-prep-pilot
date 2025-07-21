@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Building2, Users, Plus, Edit, Trash2, UserPlus, 
-  GraduationCap, BookOpen, Settings, TrendingUp
+  GraduationCap, BookOpen, Settings, TrendingUp, LogOut
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -280,10 +280,24 @@ export const CollegeAdminDashboard: React.FC = () => {
           <h1 className="text-3xl font-bold">College Administration</h1>
           <p className="text-muted-foreground">Manage your college departments and users</p>
         </div>
-        <Badge variant="default" className="text-sm">
-          <Building2 className="h-4 w-4 mr-1" />
-          College Admin
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Badge variant="default" className="text-sm">
+            <Building2 className="h-4 w-4 mr-1" />
+            College Admin
+          </Badge>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = '/login';
+              toast.success('Logged out successfully');
+            }}
+          >
+            <LogOut className="h-4 w-4 mr-1" />
+            Logout
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
