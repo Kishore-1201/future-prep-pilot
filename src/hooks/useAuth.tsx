@@ -72,22 +72,6 @@ export const useAuth = () => {
         return;
       }
 
-      // CRITICAL: Check if user is college admin pending approval
-      if (data.detailed_role === 'college_admin' && data.pending_approval) {
-        console.log('College admin pending approval, blocking login');
-        setProfile(data);
-        setLoading(false);
-        return;
-      }
-
-      // CRITICAL: Only allow login if user is properly approved
-      if (data.pending_approval) {
-        console.log('User has pending approval, cannot login');
-        setProfile(data);
-        setLoading(false);
-        return;
-      }
-
       console.log('Profile fetched successfully:', data);
       setProfile(data);
     } catch (error) {
@@ -106,7 +90,7 @@ export const useAuth = () => {
       
       console.log('User metadata:', userMetadata);
       
-      // Handle college admin request - CRITICAL: Set pending_approval = true
+      // CRITICAL: Handle college admin request - Set as admin role with pending approval
       if (userMetadata.college_request) {
         console.log('Creating profile for college admin request with pending approval');
         const { data, error } = await supabase
@@ -114,10 +98,10 @@ export const useAuth = () => {
           .upsert({
             id: userId,
             name: userMetadata.name || email.split('@')[0] || 'User',
-            role: 'student', // Temporary role
-            detailed_role: 'college_admin', // This identifies them as college admin
-            pending_approval: true, // CRITICAL: Cannot login until approved
-            is_active: false // CRITICAL: Not active until approved
+            role: 'admin', // CRITICAL: Set as admin, not student
+            detailed_role: 'college_admin',
+            pending_approval: true, // Cannot login until approved
+            is_active: false // Not active until approved
           }, {
             onConflict: 'id'
           })
@@ -188,5 +172,7 @@ export const useAuth = () => {
     isAuthenticated: !!user && !!profile && !profile.pending_approval && profile.is_active,
     isPendingApproval: profile?.pending_approval || false,
     isCollegeAdminPending: profile?.detailed_role === 'college_admin' && profile?.pending_approval,
+    needsDepartmentJoin: !!profile && !profile.pending_approval && profile.is_active && 
+      (profile.role === 'student' || profile.role === 'teacher') && !profile.department_id,
   };
 };

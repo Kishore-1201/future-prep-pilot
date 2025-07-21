@@ -1,19 +1,20 @@
-
 import React, { useState } from 'react';
-import { Calendar, BookOpen, Bell, Users, Settings, Shield, FileText, TrendingUp, GraduationCap, Brain, LogOut, Building2, Building } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Calendar, BookOpen, Bell, Users, Settings, Shield, FileText, TrendingUp, GraduationCap, Brain, LogOut, Building2, Building, UserPlus } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RealStudentDashboard } from '@/components/RealStudentDashboard';
 import { TeacherDashboard } from '@/components/TeacherDashboard';
 import { AdminDashboard } from '@/components/AdminDashboard';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface Profile {
   id: string;
   name: string;
   role: 'student' | 'teacher' | 'admin';
   department?: string;
+  department_id?: string;
   student_id?: string;
   employee_id?: string;
   is_active: boolean;
@@ -25,6 +26,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
   const { signOut } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
 
   // Show loading state if profile is still null
@@ -37,6 +39,103 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
           <div className="space-y-2">
             <p className="text-lg font-semibold">CampusConnect</p>
             <p className="text-muted-foreground">Setting up your profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // CRITICAL: Show empty state if user hasn't joined a department
+  const showEmptyState = (userProfile.role === 'student' || userProfile.role === 'teacher') && !userProfile.department_id;
+
+  if (showEmptyState) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Brain className="h-8 w-8 text-primary" />
+                  <div>
+                    <h1 className="text-2xl font-bold text-primary">CampusConnect</h1>
+                    <p className="text-xs text-muted-foreground hidden sm:block">Smart Academic Assistant</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    {userProfile.role === 'student' && <BookOpen className="h-3 w-3" />}
+                    {userProfile.role === 'teacher' && <GraduationCap className="h-3 w-3" />}
+                    {userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    Welcome, {userProfile.name}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={signOut}>
+                  <LogOut className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Empty State Content */}
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-2xl mx-auto text-center space-y-8">
+            <div className="space-y-4">
+              <UserPlus className="h-24 w-24 text-muted-foreground mx-auto" />
+              <h2 className="text-3xl font-bold">Join a Department</h2>
+              <p className="text-lg text-muted-foreground">
+                You need to join a department to access your dashboard and academic features.
+              </p>
+            </div>
+
+            <Card className="text-left">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  How to Join a Department
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">1</div>
+                    <div>
+                      <p className="font-medium">Contact your Department Admin</p>
+                      <p className="text-sm text-muted-foreground">Get the join code from your department administrator</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">2</div>
+                    <div>
+                      <p className="font-medium">Enter the Join Code</p>
+                      <p className="text-sm text-muted-foreground">Use the code to request access to your department</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">3</div>
+                    <div>
+                      <p className="font-medium">Wait for Approval</p>
+                      <p className="text-sm text-muted-foreground">Your request will be reviewed and approved</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button onClick={() => navigate('/join-department')} size="lg">
+                <UserPlus className="h-5 w-5 mr-2" />
+                Join Department
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -151,6 +250,13 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
                 <Settings className="h-4 w-4 mr-1" />
                 <span className="hidden lg:inline">Settings</span>
               </Button>
+              {/* Add Join Department button for students/teachers */}
+              {(userProfile.role === 'student' || userProfile.role === 'teacher') && (
+                <Button variant="outline" size="sm" onClick={() => navigate('/join-department')}>
+                  <UserPlus className="h-4 w-4 mr-1" />
+                  <span className="hidden lg:inline">Change Department</span>
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={signOut}>
                 <LogOut className="h-4 w-4 mr-1" />
                 <span className="hidden sm:inline">Sign Out</span>

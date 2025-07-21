@@ -23,8 +23,9 @@ const ProtectedRoute: React.FC<{
   requiredRole?: string;
   requiredDetailedRole?: string;
   allowPending?: boolean;
-}> = ({ children, requiredRole, requiredDetailedRole, allowPending = false }) => {
-  const { user, profile, loading, isPendingApproval, isCollegeAdminPending } = useAuth();
+  requireDepartment?: boolean;
+}> = ({ children, requiredRole, requiredDetailedRole, allowPending = false, requireDepartment = false }) => {
+  const { user, profile, loading, isPendingApproval, isCollegeAdminPending, needsDepartmentJoin } = useAuth();
 
   if (loading) {
     return (
@@ -45,7 +46,7 @@ const ProtectedRoute: React.FC<{
     return <Navigate to="/login" replace />;
   }
 
-  // CRITICAL: Handle college admin pending approval
+  // Handle college admin pending approval
   if (isCollegeAdminPending && !allowPending) {
     return <Navigate to="/pending-approval" replace />;
   }
@@ -55,9 +56,14 @@ const ProtectedRoute: React.FC<{
     return <Navigate to="/pending-approval" replace />;
   }
 
-  // CRITICAL: Block inactive users
+  // Block inactive users
   if (profile && !profile.is_active && !allowPending) {
     return <Navigate to="/pending-approval" replace />;
+  }
+
+  // CRITICAL: Enforce department join requirement for students and teachers
+  if (needsDepartmentJoin && requireDepartment) {
+    return <Navigate to="/join-department" replace />;
   }
 
   if (requiredRole && profile?.role !== requiredRole) {
@@ -72,12 +78,12 @@ const ProtectedRoute: React.FC<{
 };
 
 const AppRoutes = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, needsDepartmentJoin } = useAuth();
 
   const getDashboardRoute = () => {
     if (!profile) return '/login';
     
-    // CRITICAL: Handle college admin pending approval
+    // Handle college admin pending approval
     if (profile.detailed_role === 'college_admin' && profile.pending_approval) {
       return '/pending-approval';
     }
@@ -85,6 +91,11 @@ const AppRoutes = () => {
     // Handle any pending approval
     if (profile.pending_approval || !profile.is_active) {
       return '/pending-approval';
+    }
+
+    // CRITICAL: Students and teachers must join department first
+    if (needsDepartmentJoin) {
+      return '/join-department';
     }
     
     // Super Admin (admin with no college_id)
@@ -100,11 +111,6 @@ const AppRoutes = () => {
     // Department Admin
     if (profile.detailed_role === 'department_admin') {
       return '/department-admin';
-    }
-
-    // Students and Teachers without department
-    if ((profile.role === 'student' || profile.role === 'teacher') && !profile.department_id) {
-      return '/join-department';
     }
     
     // Regular users with department
@@ -170,10 +176,11 @@ const AppRoutes = () => {
         } 
       />
       
+      {/* CRITICAL: Dashboard requires department for students/teachers */}
       <Route 
         path="/dashboard" 
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireDepartment>
             <Dashboard userProfile={profile} />
           </ProtectedRoute>
         } 
