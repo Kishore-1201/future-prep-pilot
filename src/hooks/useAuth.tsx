@@ -7,9 +7,13 @@ interface Profile {
   id: string;
   name: string;
   role: 'student' | 'teacher' | 'admin';
+  detailed_role?: string;
+  college_id?: string;
+  department_id?: string;
   department?: string;
   student_id?: string;
   employee_id?: string;
+  pending_approval?: boolean;
   is_active: boolean;
 }
 
@@ -35,7 +39,6 @@ export const useAuth = () => {
       console.log('Auth state changed:', _event, session?.user?.email);
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Use setTimeout to prevent potential deadlocks
         setTimeout(() => {
           fetchProfile(session.user.id);
         }, 0);
@@ -69,8 +72,15 @@ export const useAuth = () => {
         return;
       }
 
+      // Check if user needs approval for login
+      if (data.pending_approval && data.detailed_role === 'college_admin') {
+        console.log('User has pending approval, cannot login');
+        setProfile(data);
+        setLoading(false);
+        return;
+      }
+
       console.log('Profile fetched successfully:', data);
-      console.log('User role from database:', data.role);
       setProfile(data);
     } catch (error) {
       console.error('Error in fetchProfile:', error);
@@ -88,7 +98,30 @@ export const useAuth = () => {
       
       console.log('User metadata:', userMetadata);
       
-      // Get role from metadata, checking multiple possible fields
+      // Handle college admin request
+      if (userMetadata.college_request) {
+        console.log('Creating profile for college admin request');
+        const { data, error } = await supabase
+          .from('profiles')
+          .upsert({
+            id: userId,
+            name: userMetadata.name || email.split('@')[0] || 'User',
+            role: 'student', // Temporary role until approved
+            detailed_role: 'college_admin',
+            pending_approval: true,
+            is_active: true
+          }, {
+            onConflict: 'id'
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        setProfile(data);
+        return;
+      }
+
+      // Get role from metadata
       let role: 'student' | 'teacher' | 'admin' = 'student';
       const possibleRole = userMetadata.role || userMetadata.user_role;
       if (possibleRole && ['student', 'teacher', 'admin'].includes(possibleRole)) {
@@ -106,28 +139,26 @@ export const useAuth = () => {
           id: userId,
           name: name,
           role: role,
-          is_active: true
+          detailed_role: role === 'admin' ? 'super_admin' : role,
+          is_active: true,
+          pending_approval: false
         }, {
           onConflict: 'id'
         })
         .select()
         .single();
 
-      if (error) {
-        console.error('Error creating profile:', error);
-        throw error;
-      }
-
-      console.log('Profile created successfully:', data);
+      if (error) throw error;
       setProfile(data);
     } catch (error) {
       console.error('Failed to create profile:', error);
-      // Set a minimal profile to prevent infinite loading
       setProfile({
         id: userId,
         name: 'User',
         role: 'student',
-        is_active: true
+        detailed_role: 'student',
+        is_active: true,
+        pending_approval: false
       });
     } finally {
       setLoading(false);
@@ -146,6 +177,7 @@ export const useAuth = () => {
     profile,
     loading,
     signOut,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !!profile && !profile.pending_approval,
+    isPendingApproval: profile?.pending_approval || false,
   };
 };

@@ -12,6 +12,8 @@ import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 import { CollegeAdminDashboard } from './pages/CollegeAdminDashboard';
 import { CollegeAdminRegistration } from './pages/CollegeAdminRegistration';
 import { PendingApproval } from './pages/PendingApproval';
+import { DepartmentAdminDashboard } from './components/DepartmentAdminDashboard';
+import { DepartmentJoin } from './components/DepartmentJoin';
 import { Brain } from 'lucide-react';
 
 const queryClient = new QueryClient();
@@ -19,9 +21,10 @@ const queryClient = new QueryClient();
 const ProtectedRoute: React.FC<{ 
   children: React.ReactNode; 
   requiredRole?: string;
+  requiredDetailedRole?: string;
   allowPending?: boolean;
-}> = ({ children, requiredRole, allowPending = false }) => {
-  const { user, profile, loading } = useAuth();
+}> = ({ children, requiredRole, requiredDetailedRole, allowPending = false }) => {
+  const { user, profile, loading, isPendingApproval } = useAuth();
 
   if (loading) {
     return (
@@ -42,11 +45,15 @@ const ProtectedRoute: React.FC<{
     return <Navigate to="/login" replace />;
   }
 
-  if (profile?.pending_approval && !allowPending) {
+  if (isPendingApproval && !allowPending) {
     return <Navigate to="/pending-approval" replace />;
   }
 
   if (requiredRole && profile?.role !== requiredRole) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (requiredDetailedRole && profile?.detailed_role !== requiredDetailedRole) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -59,17 +66,32 @@ const AppRoutes = () => {
   const getDashboardRoute = () => {
     if (!profile) return '/login';
     
+    // Handle pending approval
+    if (profile.pending_approval) {
+      return '/pending-approval';
+    }
+    
     // Super Admin (admin with no college_id)
-    if (profile.role === 'admin' && !profile.college_id) {
+    if (profile.detailed_role === 'super_admin') {
       return '/super-admin';
     }
     
     // College Admin (admin with college_id)
-    if (profile.role === 'admin' && profile.college_id) {
+    if (profile.detailed_role === 'college_admin') {
       return '/college-admin';
     }
+
+    // Department Admin
+    if (profile.detailed_role === 'department_admin') {
+      return '/department-admin';
+    }
+
+    // Students and Teachers without department
+    if ((profile.role === 'student' || profile.role === 'teacher') && !profile.department_id) {
+      return '/join-department';
+    }
     
-    // Regular users (students, teachers)
+    // Regular users with department
     return '/dashboard';
   };
 
@@ -97,8 +119,8 @@ const AppRoutes = () => {
       <Route 
         path="/super-admin" 
         element={
-          <ProtectedRoute requiredRole="admin">
-            {profile?.college_id ? <Navigate to="/college-admin" replace /> : <SuperAdminDashboard />}
+          <ProtectedRoute requiredDetailedRole="super_admin">
+            <SuperAdminDashboard />
           </ProtectedRoute>
         } 
       />
@@ -106,8 +128,28 @@ const AppRoutes = () => {
       <Route 
         path="/college-admin" 
         element={
-          <ProtectedRoute requiredRole="admin">
-            {!profile?.college_id ? <Navigate to="/super-admin" replace /> : <CollegeAdminDashboard />}
+          <ProtectedRoute requiredDetailedRole="college_admin">
+            <CollegeAdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/department-admin" 
+        element={
+          <ProtectedRoute requiredDetailedRole="department_admin">
+            <DepartmentAdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/join-department" 
+        element={
+          <ProtectedRoute>
+            <div className="container mx-auto py-8">
+              <DepartmentJoin />
+            </div>
           </ProtectedRoute>
         } 
       />

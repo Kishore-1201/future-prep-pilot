@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Users, Building, Shield, CheckCircle, XCircle, Clock, 
@@ -76,47 +77,16 @@ export const SuperAdminDashboard: React.FC = () => {
 
   const handleApproveRequest = async (requestId: string) => {
     try {
-      const request = requests.find(r => r.id === requestId);
-      if (!request) return;
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) throw new Error('Not authenticated');
 
-      // Create the college first
-      const { data: college, error: collegeError } = await supabase
-        .from('colleges')
-        .insert({
-          name: request.college_name,
-          code: request.college_code,
-          address: request.college_address,
-          phone: request.phone,
-          website: request.website
-        })
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc('approve_college_admin_request', {
+        request_id: requestId,
+        approver_id: userData.user.id
+      });
 
-      if (collegeError) throw collegeError;
-
-      // Update user profile to be college admin
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          role: 'admin',
-          college_id: college.id,
-          pending_approval: false
-        })
-        .eq('id', request.user_id);
-
-      if (profileError) throw profileError;
-
-      // Update request status
-      const { error: requestError } = await supabase
-        .from('college_admin_requests')
-        .update({ 
-          status: 'approved',
-          approved_at: new Date().toISOString()
-        })
-        .eq('id', requestId);
-
-      if (requestError) throw requestError;
-
+      if (error) throw error;
+      
       toast.success('College admin request approved successfully');
       fetchRequests();
       fetchStats();
@@ -128,10 +98,10 @@ export const SuperAdminDashboard: React.FC = () => {
 
   const handleRejectRequest = async (requestId: string) => {
     try {
-      const { error } = await supabase
-        .from('college_admin_requests')
-        .update({ status: 'rejected' })
-        .eq('id', requestId);
+      const { data, error } = await supabase.rpc('reject_college_admin_request', {
+        request_id: requestId,
+        rejection_reason: 'Rejected by super admin'
+      });
 
       if (error) throw error;
 

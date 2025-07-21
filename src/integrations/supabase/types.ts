@@ -170,6 +170,328 @@ export type Database = {
           },
         ]
       }
+      college_admin_requests: {
+        Row: {
+          admin_email: string
+          admin_name: string
+          approved_at: string | null
+          approved_by: string | null
+          college_address: string
+          college_code: string
+          college_name: string
+          created_at: string
+          id: string
+          phone: string | null
+          rejection_reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          admin_email: string
+          admin_name: string
+          approved_at?: string | null
+          approved_by?: string | null
+          college_address: string
+          college_code: string
+          college_name: string
+          created_at?: string
+          id?: string
+          phone?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          admin_email?: string
+          admin_name?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          college_address?: string
+          college_code?: string
+          college_name?: string
+          created_at?: string
+          id?: string
+          phone?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "college_admin_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      colleges: {
+        Row: {
+          address: string | null
+          code: string
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          code: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          code?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      department_admins: {
+        Row: {
+          assigned_by: string
+          college_id: string
+          created_at: string
+          department_id: string
+          id: string
+          is_active: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by: string
+          college_id: string
+          created_at?: string
+          department_id: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string
+          college_id?: string
+          created_at?: string
+          department_id?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_admins_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_admins_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_admins_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_admins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      department_codes: {
+        Row: {
+          college_id: string
+          created_at: string
+          created_by: string
+          department_id: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          student_code: string
+          teacher_code: string
+          updated_at: string
+        }
+        Insert: {
+          college_id: string
+          created_at?: string
+          created_by: string
+          department_id: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          student_code: string
+          teacher_code: string
+          updated_at?: string
+        }
+        Update: {
+          college_id?: string
+          created_at?: string
+          created_by?: string
+          department_id?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          student_code?: string
+          teacher_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_codes_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_codes_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: true
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      department_rooms: {
+        Row: {
+          created_at: string
+          department_id: string
+          description: string | null
+          id: string
+          is_active: boolean
+          max_students: number | null
+          max_teachers: number | null
+          room_admin: string | null
+          room_code: string
+          room_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department_id: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          max_students?: number | null
+          max_teachers?: number | null
+          room_admin?: string | null
+          room_code: string
+          room_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          max_students?: number | null
+          max_teachers?: number | null
+          room_admin?: string | null
+          room_code?: string
+          room_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_rooms_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_rooms_room_admin_fkey"
+            columns: ["room_admin"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          code: string
+          college_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          college_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          college_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string
@@ -352,44 +674,139 @@ export type Database = {
           },
         ]
       }
+      pending_department_joins: {
+        Row: {
+          college_id: string
+          created_at: string
+          department_id: string
+          id: string
+          join_code: string
+          status: string
+          updated_at: string
+          user_id: string
+          user_role: string
+        }
+        Insert: {
+          college_id: string
+          created_at?: string
+          department_id: string
+          id?: string
+          join_code: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          user_role: string
+        }
+        Update: {
+          college_id?: string
+          created_at?: string
+          department_id?: string
+          id?: string
+          join_code?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          user_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_department_joins_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_department_joins_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_department_joins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          college_id: string | null
           created_at: string
           department: string | null
+          department_id: string | null
+          detailed_role: string | null
           employee_id: string | null
           google_auth_id: string | null
           id: string
           is_active: boolean
           name: string
+          pending_approval: boolean | null
           role: Database["public"]["Enums"]["app_role"]
+          room_id: string | null
           student_id: string | null
           updated_at: string
         }
         Insert: {
+          college_id?: string | null
           created_at?: string
           department?: string | null
+          department_id?: string | null
+          detailed_role?: string | null
           employee_id?: string | null
           google_auth_id?: string | null
           id: string
           is_active?: boolean
           name: string
+          pending_approval?: boolean | null
           role?: Database["public"]["Enums"]["app_role"]
+          room_id?: string | null
           student_id?: string | null
           updated_at?: string
         }
         Update: {
+          college_id?: string | null
           created_at?: string
           department?: string | null
+          department_id?: string | null
+          detailed_role?: string | null
           employee_id?: string | null
           google_auth_id?: string | null
           id?: string
           is_active?: boolean
           name?: string
+          pending_approval?: boolean | null
           role?: Database["public"]["Enums"]["app_role"]
+          room_id?: string | null
           student_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_college_id_fkey"
+            columns: ["college_id"]
+            isOneToOne: false
+            referencedRelation: "colleges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "department_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rsvps: {
         Row: {
@@ -485,9 +902,67 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_college_admin_request: {
+        Args: { request_id: string; approver_id: string }
+        Returns: boolean
+      }
+      approve_department_join: {
+        Args: { join_id: string; approver_id: string }
+        Returns: boolean
+      }
+      create_department_admin: {
+        Args: {
+          admin_email: string
+          admin_name: string
+          admin_password: string
+          department_id: string
+          college_id: string
+          assigned_by: string
+        }
+        Returns: string
+      }
+      fix_user_roles: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      generate_department_codes: {
+        Args: { dept_id: string; college_id: string; created_by: string }
+        Returns: Record<string, unknown>
+      }
+      get_admin_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_college_stats: {
+        Args: { college_uuid?: string }
+        Returns: Json
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_department_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          department_id: string
+          department_name: string
+          department_code: string
+          total_students: number
+          total_teachers: number
+          total_users: number
+        }[]
+      }
+      get_super_admin_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      join_department_with_code: {
+        Args: { user_id: string; join_code: string; user_role: string }
+        Returns: boolean
+      }
+      reject_college_admin_request: {
+        Args: { request_id: string; rejection_reason?: string }
+        Returns: boolean
       }
     }
     Enums: {
