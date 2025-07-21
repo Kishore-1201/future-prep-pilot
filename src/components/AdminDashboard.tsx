@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { CollegeDepartmentAdmin } from './CollegeDepartmentAdmin';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AdminDashboardProps {
   activeTab: string;
@@ -25,8 +26,8 @@ interface Department {
   id: string;
   name: string;
   code: string;
-  description: string;
-  head_of_department: string | null;
+  description: string | null;
+  college_id: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -37,6 +38,7 @@ interface User {
   name: string;
   role: 'student' | 'teacher' | 'admin';
   department_id: string | null;
+  college_id: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -54,6 +56,7 @@ interface AdminStats {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab }) => {
+  const { profile } = useAuth();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
@@ -84,7 +87,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab }) => 
     try {
       const { data, error } = await supabase.rpc('get_admin_stats');
       if (error) throw error;
-      setAdminStats(data);
+      setAdminStats(data as AdminStats);
     } catch (error) {
       console.error('Error fetching admin stats:', error);
       toast.error('Failed to load statistics');
@@ -92,11 +95,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab }) => 
   };
 
   const fetchDepartments = async () => {
+    if (!profile?.college_id) return;
+    
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('departments')
         .select('*')
+        .eq('college_id', profile.college_id)
+        .eq('is_active', true)
         .order('name');
       
       if (error) throw error;
@@ -110,6 +117,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab }) => 
   };
 
   const fetchUsers = async () => {
+    if (!profile?.college_id) return;
+    
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -119,13 +128,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab }) => 
           name,
           role,
           department_id,
+          college_id,
           is_active,
-          created_at,
-          departments (
-            name,
-            code
-          )
+          created_at
         `)
+        .eq('college_id', profile.college_id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -139,7 +146,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab }) => 
   };
 
   const handleCreateDepartment = async () => {
-    if (!departmentForm.name || !departmentForm.code) {
+    if (!departmentForm.name || !departmentForm.code || !profile?.college_id) {
       toast.error('Name and code are required');
       return;
     }
@@ -147,7 +154,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab }) => 
     try {
       const { error } = await supabase
         .from('departments')
-        .insert([departmentForm]);
+        .insert([{
+          name: departmentForm.name,
+          code: departmentForm.code,
+          description: departmentForm.description || null,
+          college_id: profile.college_id
+        }]);
 
       if (error) throw error;
       
@@ -173,7 +185,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab }) => 
         .update({
           name: departmentForm.name,
           code: departmentForm.code,
-          description: departmentForm.description,
+          description: departmentForm.description || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', editingDepartment.id);

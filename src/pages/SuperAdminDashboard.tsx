@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Users, Building, Shield, CheckCircle, XCircle, Clock, 
@@ -20,11 +19,15 @@ interface CollegeAdminRequest {
   college_address: string;
   admin_name: string;
   admin_email: string;
-  phone: string;
-  website?: string;
+  phone: string | null;
+  website?: string | null;
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
+  updated_at: string;
+  approved_by: string | null;
+  approved_at: string | null;
   user_id: string;
+  rejection_reason: string | null;
 }
 
 interface SystemStats {
@@ -32,6 +35,8 @@ interface SystemStats {
   total_colleges: number;
   pending_requests: number;
   active_admins: number;
+  total_departments: number;
+  total_rooms: number;
 }
 
 export const SuperAdminDashboard: React.FC = () => {
@@ -56,7 +61,10 @@ export const SuperAdminDashboard: React.FC = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      setRequests(data || []);
+      setRequests(data?.map(item => ({
+        ...item,
+        status: item.status as 'pending' | 'approved' | 'rejected'
+      })) || []);
     } catch (error) {
       console.error('Error fetching requests:', error);
       toast.error('Failed to load requests');
@@ -69,7 +77,7 @@ export const SuperAdminDashboard: React.FC = () => {
     try {
       const { data, error } = await supabase.rpc('get_super_admin_stats');
       if (error) throw error;
-      setStats(data);
+      setStats(data as SystemStats);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
