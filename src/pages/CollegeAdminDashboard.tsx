@@ -163,7 +163,7 @@ export const CollegeAdminDashboard: React.FC = () => {
       });
       
       if (error) throw error;
-      setStats(data as CollegeStats);
+      setStats(data as unknown as CollegeStats);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }

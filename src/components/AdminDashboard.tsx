@@ -87,7 +87,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab }) => 
     try {
       const { data, error } = await supabase.rpc('get_admin_stats');
       if (error) throw error;
-      setAdminStats(data as AdminStats);
+      setAdminStats(data as unknown as AdminStats);
     } catch (error) {
       console.error('Error fetching admin stats:', error);
       toast.error('Failed to load statistics');

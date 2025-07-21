@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Users, Building, Shield, CheckCircle, XCircle, Clock, 
@@ -77,7 +78,7 @@ export const SuperAdminDashboard: React.FC = () => {
     try {
       const { data, error } = await supabase.rpc('get_super_admin_stats');
       if (error) throw error;
-      setStats(data as SystemStats);
+      setStats(data as unknown as SystemStats);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
