@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Building2, Users, Plus, Edit, Trash2, UserPlus, 
-  GraduationCap, BookOpen, Settings, TrendingUp, LogOut
+  GraduationCap, BookOpen, Settings, TrendingUp, LogOut,
+  Shield, Crown, UserCheck, Clock
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { DepartmentCard } from '@/components/DepartmentCard';
 
 interface Department {
   id: string;
@@ -41,10 +43,20 @@ interface CollegeUser {
   id: string;
   name: string;
   role: 'student' | 'teacher' | 'admin';
+  detailed_role?: string;
   department_id: string | null;
   room_id: string | null;
   is_active: boolean;
   created_at: string;
+}
+
+interface AvailableHOD {
+  id: string;
+  name: string;
+  role: string;
+  detailed_role: string;
+  department_id: string | null;
+  is_active: boolean;
 }
 
 interface CollegeStats {
@@ -59,6 +71,7 @@ export const CollegeAdminDashboard: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [rooms, setRooms] = useState<DepartmentRoom[]>([]);
   const [users, setUsers] = useState<CollegeUser[]>([]);
+  const [availableHODs, setAvailableHODs] = useState<AvailableHOD[]>([]);
   const [stats, setStats] = useState<CollegeStats | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -85,6 +98,7 @@ export const CollegeAdminDashboard: React.FC = () => {
       fetchDepartments();
       fetchRooms();
       fetchUsers();
+      fetchAvailableHODs();
       fetchStats();
     }
   }, [profile]);
@@ -151,6 +165,26 @@ export const CollegeAdminDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to load users');
+    }
+  };
+
+  const fetchAvailableHODs = async () => {
+    if (!profile?.college_id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, role, detailed_role, department_id, is_active')
+        .eq('college_id', profile.college_id)
+        .eq('role', 'teacher')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      setAvailableHODs(data || []);
+    } catch (error) {
+      console.error('Error fetching available HODs:', error);
+      toast.error('Failed to load available HODs');
     }
   };
 
@@ -399,7 +433,7 @@ export const CollegeAdminDashboard: React.FC = () => {
 
         <TabsContent value="departments" className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Departments</h2>
+            <h2 className="text-2xl font-bold">Departments & HOD Management</h2>
             <Dialog open={showDepartmentDialog} onOpenChange={setShowDepartmentDialog}>
               <DialogTrigger asChild>
                 <Button>
@@ -453,31 +487,15 @@ export const CollegeAdminDashboard: React.FC = () => {
           
           <div className="grid gap-4">
             {departments.map((department) => (
-              <Card key={department.id}>
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5 text-primary" />
-                        <h3 className="text-lg font-semibold">{department.name}</h3>
-                        <Badge variant="outline">{department.code}</Badge>
-                      </div>
-                      {department.description && (
-                        <p className="text-muted-foreground">{department.description}</p>
-                      )}
-                      <p className="text-sm text-muted-foreground">
-                        Created: {new Date(department.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <DepartmentCard 
+                key={department.id} 
+                department={department} 
+                collegeId={profile?.college_id || ''} 
+                onUpdate={() => {
+                  fetchDepartments();
+                  fetchUsers();
+                }}
+              />
             ))}
           </div>
         </TabsContent>
