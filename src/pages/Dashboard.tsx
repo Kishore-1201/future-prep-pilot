@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 interface Profile {
   id: string;
   name: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: 'student' | 'teacher' | 'admin' | 'department_admin';
   department?: string;
   department_id?: string;
   student_id?: string;

@@ -42,7 +42,7 @@ interface DepartmentRoom {
 interface CollegeUser {
   id: string;
   name: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: 'student' | 'teacher' | 'admin' | 'department_admin';
   detailed_role?: string;
   department_id: string | null;
   room_id: string | null;

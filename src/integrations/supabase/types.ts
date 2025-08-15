@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -734,6 +734,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_type: string | null
           college_id: string | null
           created_at: string
           department: string | null
@@ -751,6 +752,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_type?: string | null
           college_id?: string | null
           created_at?: string
           department?: string | null
@@ -768,6 +770,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_type?: string | null
           college_id?: string | null
           created_at?: string
           department?: string | null
@@ -903,21 +906,45 @@ export type Database = {
     }
     Functions: {
       approve_college_admin_request: {
-        Args: { request_id: string; approver_id: string }
+        Args: { request_id: string }
         Returns: boolean
       }
       approve_department_join: {
-        Args: { join_id: string; approver_id: string }
+        Args: { approver_id: string; join_id: string }
         Returns: boolean
+      }
+      create_college_admin_request: {
+        Args: {
+          p_admin_email: string
+          p_admin_name: string
+          p_college_address: string
+          p_college_code: string
+          p_college_name: string
+          p_phone: string
+          p_user_id: string
+          p_website: string
+        }
+        Returns: string
       }
       create_department_admin: {
         Args: {
           admin_email: string
           admin_name: string
           admin_password: string
-          department_id: string
-          college_id: string
           assigned_by: string
+          college_id: string
+          department_id: string
+        }
+        Returns: string
+      }
+      create_department_admin_user: {
+        Args: {
+          admin_email: string
+          admin_name: string
+          admin_password: string
+          assigned_by: string
+          college_id: string
+          department_id: string
         }
         Returns: string
       }
@@ -926,7 +953,7 @@ export type Database = {
         Returns: undefined
       }
       generate_department_codes: {
-        Args: { dept_id: string; college_id: string; created_by: string }
+        Args: { college_id: string; created_by: string; dept_id: string }
         Returns: Record<string, unknown>
       }
       get_admin_stats: {
@@ -944,9 +971,9 @@ export type Database = {
       get_department_stats: {
         Args: Record<PropertyKey, never>
         Returns: {
+          department_code: string
           department_id: string
           department_name: string
-          department_code: string
           total_students: number
           total_teachers: number
           total_users: number
@@ -957,16 +984,16 @@ export type Database = {
         Returns: Json
       }
       join_department_with_code: {
-        Args: { user_id: string; join_code: string; user_role: string }
+        Args: { join_code: string; user_id: string; user_role: string }
         Returns: boolean
       }
       reject_college_admin_request: {
-        Args: { request_id: string; rejection_reason?: string }
+        Args: { request_id: string }
         Returns: boolean
       }
     }
     Enums: {
-      app_role: "student" | "teacher" | "admin"
+      app_role: "student" | "teacher" | "admin" | "department_admin"
       assignment_priority: "low" | "medium" | "high"
       assignment_status: "pending" | "in-progress" | "completed" | "overdue"
       attendance_status: "present" | "absent" | "late"
@@ -1107,7 +1134,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["student", "teacher", "admin"],
+      app_role: ["student", "teacher", "admin", "department_admin"],
       assignment_priority: ["low", "medium", "high"],
       assignment_status: ["pending", "in-progress", "completed", "overdue"],
       attendance_status: ["present", "absent", "late"],

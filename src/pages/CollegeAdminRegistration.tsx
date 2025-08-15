@@ -81,21 +81,26 @@ export const CollegeAdminRegistration: React.FC = () => {
       // Wait a moment to ensure the user is fully created in the database
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Create college admin request using the new function
+      // Create college admin request directly
       console.log('Creating college admin request for user:', authData.user.id);
       
-      const { data: requestId, error: requestError } = await supabase.rpc('create_college_admin_request', {
-        p_user_id: authData.user.id,
-        p_college_name: formData.college_name,
-        p_college_code: formData.college_code.toUpperCase(),
-        p_college_address: formData.college_address,
-        p_admin_name: formData.admin_name,
-        p_admin_email: formData.admin_email,
-        p_phone: formData.admin_phone || formData.phone,
-        p_website: formData.website
-      });
+      const { data: requestData, error: requestError } = await supabase
+        .from('college_admin_requests')
+        .insert({
+          user_id: authData.user.id,
+          college_name: formData.college_name,
+          college_code: formData.college_code.toUpperCase(),
+          college_address: formData.college_address,
+          admin_name: formData.admin_name,
+          admin_email: formData.admin_email,
+          phone: formData.admin_phone || formData.phone,
+          website: formData.website,
+          status: 'pending'
+        })
+        .select('id')
+        .single();
 
-      console.log('Request creation result:', { requestId, requestError });
+      console.log('Request creation result:', { requestData, requestError });
 
       if (requestError) {
         console.error('Request error:', requestError);

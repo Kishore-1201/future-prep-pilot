@@ -36,7 +36,7 @@ interface Department {
 interface User {
   id: string;
   name: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: 'student' | 'teacher' | 'admin' | 'department_admin';
   department_id: string | null;
   college_id: string | null;
   is_active: boolean;
