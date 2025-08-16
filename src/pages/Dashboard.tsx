@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Calendar, BookOpen, Bell, Users, Settings, Shield, FileText, TrendingUp, GraduationCap, Brain, LogOut, Building2, Building, UserPlus } from 'lucide-react';
+import { Calendar, BookOpen, Bell, Users, Settings, Shield, FileText, TrendingUp, GraduationCap, Brain, LogOut, Building2, Building, UserPlus, Crown, QrCode, UserCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RealStudentDashboard } from '@/components/RealStudentDashboard';
 import { TeacherDashboard } from '@/components/TeacherDashboard';
+import { HODDashboard } from '@/components/HODDashboard';
 import { AdminDashboard } from '@/components/AdminDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +14,7 @@ interface Profile {
   id: string;
   name: string;
   role: 'student' | 'teacher' | 'admin' | 'department_admin';
+  detailed_role?: string;
   department?: string;
   department_id?: string;
   student_id?: string;
@@ -143,6 +145,22 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
   }
 
   const getNavigation = () => {
+    // Check if user is HOD
+    const isHOD = userProfile.role === 'teacher' && userProfile.detailed_role === 'hod';
+    
+    if (isHOD) {
+      return [
+        { id: 'overview', label: 'Overview', icon: Calendar },
+        { id: 'codes', label: 'Join Codes', icon: QrCode },
+        { id: 'requests', label: 'Join Requests', icon: UserCheck },
+        { id: 'classes', label: 'My Classes', icon: BookOpen },
+        { id: 'assignments', label: 'Assignments', icon: FileText },
+        { id: 'students', label: 'Students', icon: Users },
+        { id: 'teachers', label: 'Teachers', icon: GraduationCap },
+        { id: 'announcements', label: 'Announcements', icon: Bell },
+      ];
+    }
+
     switch (userProfile.role) {
       case 'student':
         return [
@@ -182,6 +200,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
   };
 
   const renderDashboard = () => {
+    // Check if user is HOD
+    const isHOD = userProfile.role === 'teacher' && userProfile.detailed_role === 'hod';
+    
     switch (userProfile.role) {
       case 'student':
         return (
@@ -191,7 +212,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
           />
         );
       case 'teacher':
-        return <TeacherDashboard activeTab={activeTab} />;
+        // Show HOD dashboard for HODs, regular teacher dashboard for teachers
+        return isHOD ? <HODDashboard activeTab={activeTab} /> : <TeacherDashboard activeTab={activeTab} />;
       case 'admin':
         return <AdminDashboard activeTab={activeTab} />;
       default:
@@ -231,9 +253,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
               <div className="flex items-center gap-2">
                 <Badge variant={getRoleColor(userProfile.role)} className="flex items-center gap-1">
                   {userProfile.role === 'admin' && <Shield className="h-3 w-3" />}
-                  {userProfile.role === 'teacher' && <GraduationCap className="h-3 w-3" />}
+                  {userProfile.role === 'teacher' && userProfile.detailed_role === 'hod' && <Crown className="h-3 w-3" />}
+                  {userProfile.role === 'teacher' && userProfile.detailed_role !== 'hod' && <GraduationCap className="h-3 w-3" />}
                   {userProfile.role === 'student' && <BookOpen className="h-3 w-3" />}
-                  {userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)}
+                  {userProfile.role === 'teacher' && userProfile.detailed_role === 'hod' ? 'HOD' : userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
                   Welcome, {userProfile.name}

@@ -187,5 +187,6 @@ export const useAuth = () => {
     isCollegeAdminPending: profile?.detailed_role === 'college_admin' && profile?.pending_approval,
     needsDepartmentJoin: !!profile && !profile.pending_approval && profile.is_active && 
       (profile.role === 'student' || (profile.role === 'teacher' && !profile.is_hod)) && !profile.department_id,
+    needsCollegeSelection: !!profile && profile.is_hod && profile.pending_approval && !profile.college_id,
   };
 };

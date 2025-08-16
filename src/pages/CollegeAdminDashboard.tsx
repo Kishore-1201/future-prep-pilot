@@ -97,12 +97,18 @@ export const CollegeAdminDashboard: React.FC = () => {
   useEffect(() => {
     if (profile?.college_id) {
       fetchDepartments();
-      fetchRooms();
       fetchUsers();
       fetchAvailableHODs();
       fetchStats();
     }
   }, [profile]);
+
+  // Fetch rooms after departments are loaded
+  useEffect(() => {
+    if (departments.length > 0) {
+      fetchRooms();
+    }
+  }, [departments]);
 
   const fetchDepartments = async () => {
     if (!profile?.college_id) return;
@@ -142,6 +148,10 @@ export const CollegeAdminDashboard: React.FC = () => {
       const collegeRooms = data?.filter(room => 
         departments.some(dept => dept.id === room.department_id)
       ) || [];
+      
+      console.log('Fetched rooms:', data);
+      console.log('College departments:', departments.map(d => d.id));
+      console.log('Filtered college rooms:', collegeRooms);
       
       setRooms(collegeRooms);
     } catch (error) {
@@ -630,6 +640,12 @@ export const CollegeAdminDashboard: React.FC = () => {
               </Card>
             ))}
           </div>
+        </TabsContent>
+
+        <TabsContent value="hod-requests" className="space-y-6">
+          {profile?.college_id && (
+            <HODRequestsTab collegeId={profile.college_id} />
+          )}
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">

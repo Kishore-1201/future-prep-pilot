@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Building2, Edit, Crown, UserPlus, Users, Shield, 
-  CheckCircle, Clock, AlertCircle 
+  CheckCircle, Clock, AlertCircle, ChevronDown, ChevronUp, BookOpen
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,16 @@ interface DepartmentStats {
   room_count: number;
 }
 
+interface DepartmentRoom {
+  id: string;
+  room_name: string;
+  room_code: string;
+  description: string;
+  max_students: number;
+  max_teachers: number;
+  is_active: boolean;
+}
+
 interface DepartmentCardProps {
   department: Department;
   collegeId: string;
@@ -64,6 +74,8 @@ export const DepartmentCard: React.FC<DepartmentCardProps> = ({
     teacher_count: 0,
     room_count: 0
   });
+  const [departmentRooms, setDepartmentRooms] = useState<DepartmentRoom[]>([]);
+  const [showRooms, setShowRooms] = useState(false);
   const [adminForm, setAdminForm] = useState({
     name: '',
     email: '',
@@ -75,6 +87,7 @@ export const DepartmentCard: React.FC<DepartmentCardProps> = ({
     fetchAvailableHODs();
     fetchCurrentHOD();
     fetchDepartmentStats();
+    fetchDepartmentRooms();
   }, [department.id]);
 
   const fetchAvailableHODs = async () => {
@@ -142,6 +155,22 @@ export const DepartmentCard: React.FC<DepartmentCardProps> = ({
       });
     } catch (error) {
       console.error('Error fetching department stats:', error);
+    }
+  };
+
+  const fetchDepartmentRooms = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('department_rooms')
+        .select('id, room_name, room_code, description, max_students, max_teachers, is_active')
+        .eq('department_id', department.id)
+        .eq('is_active', true)
+        .order('room_name');
+      
+      if (error) throw error;
+      setDepartmentRooms(data || []);
+    } catch (error) {
+      console.error('Error fetching department rooms:', error);
     }
   };
 
@@ -453,6 +482,51 @@ export const DepartmentCard: React.FC<DepartmentCardProps> = ({
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Department Rooms Section */}
+        {departmentRooms.length > 0 && (
+          <div className="border-t pt-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowRooms(!showRooms)}
+              className="w-full justify-between p-2 h-auto"
+            >
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-blue-600" />
+                <span className="font-medium">Department Rooms ({departmentRooms.length})</span>
+              </div>
+              {showRooms ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+            
+            {showRooms && (
+              <div className="mt-3 space-y-2">
+                {departmentRooms.map((room) => (
+                  <div key={room.id} className="p-3 bg-muted/50 rounded-lg">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-sm">{room.room_name}</h4>
+                          <Badge variant="outline" className="text-xs">{room.room_code}</Badge>
+                        </div>
+                        {room.description && (
+                          <p className="text-xs text-muted-foreground">{room.description}</p>
+                        )}
+                        <div className="flex gap-3 text-xs text-muted-foreground">
+                          <span>Max Students: {room.max_students}</span>
+                          <span>Max Teachers: {room.max_teachers}</span>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="text-xs h-7">
+                        Manage
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="text-sm text-muted-foreground">
           Created: {new Date(department.created_at).toLocaleDateString()}

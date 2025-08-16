@@ -12,6 +12,7 @@ import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 import { CollegeAdminDashboard } from './pages/CollegeAdminDashboard';
 import { CollegeAdminRegistration } from './pages/CollegeAdminRegistration';
 import { PendingApproval } from './pages/PendingApproval';
+import { HODCollegeSelectionPage } from './pages/HODCollegeSelection';
 import { DepartmentAdminDashboard } from './components/DepartmentAdminDashboard';
 import { DepartmentJoin } from './components/DepartmentJoin';
 import { Brain } from 'lucide-react';
@@ -25,7 +26,7 @@ const ProtectedRoute: React.FC<{
   allowPending?: boolean;
   requireDepartment?: boolean;
 }> = ({ children, requiredRole, requiredDetailedRole, allowPending = false, requireDepartment = false }) => {
-  const { user, profile, loading, isPendingApproval, isCollegeAdminPending, needsDepartmentJoin } = useAuth();
+  const { user, profile, loading, isPendingApproval, isCollegeAdminPending, needsDepartmentJoin, needsCollegeSelection } = useAuth();
 
   if (loading) {
     return (
@@ -49,6 +50,11 @@ const ProtectedRoute: React.FC<{
   // Handle college admin pending approval
   if (isCollegeAdminPending && !allowPending) {
     return <Navigate to="/pending-approval" replace />;
+  }
+
+  // Handle HOD college selection requirement
+  if (needsCollegeSelection && !allowPending) {
+    return <Navigate to="/hod-college-selection" replace />;
   }
 
   // Handle other pending approvals
@@ -78,10 +84,15 @@ const ProtectedRoute: React.FC<{
 };
 
 const AppRoutes = () => {
-  const { user, profile, needsDepartmentJoin } = useAuth();
+  const { user, profile, needsDepartmentJoin, needsCollegeSelection } = useAuth();
 
   const getDashboardRoute = () => {
     if (!profile) return '/login';
+    
+    // Handle HOD college selection requirement FIRST
+    if (needsCollegeSelection) {
+      return '/hod-college-selection';
+    }
     
     // Handle college admin pending approval
     if (profile.detailed_role === 'college_admin' && profile.pending_approval) {
@@ -134,6 +145,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowPending>
             <PendingApproval />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/hod-college-selection" 
+        element={
+          <ProtectedRoute allowPending>
+            <HODCollegeSelectionPage />
           </ProtectedRoute>
         } 
       />
