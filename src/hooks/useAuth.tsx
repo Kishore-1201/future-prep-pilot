@@ -15,6 +15,10 @@ interface Profile {
   employee_id?: string;
   pending_approval?: boolean;
   is_active: boolean;
+  is_hod?: boolean;
+  qualification?: string;
+  experience?: string;
+  hod_details?: string;
 }
 
 export const useAuth = () => {
@@ -125,16 +129,25 @@ export const useAuth = () => {
 
       console.log('Creating regular profile with role:', role, 'for user:', email);
 
+      // Handle HOD applications - they are teachers pending approval
+      const isHOD = userMetadata.is_hod === true;
+      const profileData = {
+        id: userId,
+        name: name,
+        role: role,
+        detailed_role: isHOD ? 'hod' : (role === 'admin' ? 'super_admin' : role),
+        employee_id: userMetadata.employee_id || null,
+        qualification: userMetadata.qualification || null,
+        experience: userMetadata.experience || null,
+        hod_details: userMetadata.hod_details || null,
+        is_hod: isHOD,
+        is_active: !isHOD, // HODs are inactive until approved
+        pending_approval: isHOD // HODs need approval
+      };
+
       const { data, error } = await supabase
         .from('profiles')
-        .upsert({
-          id: userId,
-          name: name,
-          role: role,
-          detailed_role: role === 'admin' ? 'super_admin' : role,
-          is_active: true,
-          pending_approval: false
-        }, {
+        .upsert(profileData, {
           onConflict: 'id'
         })
         .select()
@@ -173,6 +186,6 @@ export const useAuth = () => {
     isPendingApproval: profile?.pending_approval || false,
     isCollegeAdminPending: profile?.detailed_role === 'college_admin' && profile?.pending_approval,
     needsDepartmentJoin: !!profile && !profile.pending_approval && profile.is_active && 
-      (profile.role === 'student' || profile.role === 'teacher') && !profile.department_id,
+      (profile.role === 'student' || (profile.role === 'teacher' && !profile.is_hod)) && !profile.department_id,
   };
 };

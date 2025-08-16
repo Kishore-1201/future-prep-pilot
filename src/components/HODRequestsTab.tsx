@@ -81,23 +81,25 @@ export const HODRequestsTab: React.FC<HODRequestsTabProps> = ({ collegeId }) => 
     try {
       setLoading(true);
       
-      // Approve the HOD request
+      // Get current user ID for the approver
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // First approve the HOD request
       const { error: approveError } = await supabase.rpc('approve_hod_request', {
         user_id: userId
       });
       
       if (approveError) throw approveError;
 
-      // Assign to department
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          department_id: departmentId,
-          college_id: collegeId
-        })
-        .eq('id', userId);
+      // Then assign them to the selected department using the new function
+      const { error: assignError } = await supabase.rpc('assign_hod_to_department', {
+        p_user_id: userId,
+        p_department_id: departmentId,
+        p_approver_id: user.id
+      });
 
-      if (updateError) throw updateError;
+      if (assignError) throw assignError;
 
       toast.success('HOD approved and assigned to department successfully!');
       fetchHODRequests();

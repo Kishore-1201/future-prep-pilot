@@ -144,6 +144,31 @@ export const DepartmentJoin: React.FC = () => {
     );
   }
 
+  // If user is an HOD waiting for assignment, show different message
+  if (profile?.is_hod && !profile?.department_id) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-800">
+              <AlertCircle className="h-5 w-5" />
+              HOD Assignment Pending
+            </CardTitle>
+            <CardDescription className="text-blue-700">
+              You are approved as an HOD. Please wait for a college admin to assign you to a department.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-blue-700">
+              College administrators will assign you to a department based on your qualifications and department needs. 
+              You will be notified once the assignment is complete.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center space-y-2">

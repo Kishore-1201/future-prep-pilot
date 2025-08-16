@@ -23,6 +23,21 @@ export const PendingApproval: React.FC = () => {
       };
     }
 
+    if (profile?.is_hod && profile?.pending_approval) {
+      return {
+        title: "HOD Application Under Review",
+        description: "Your application for Head of Department position is being reviewed by college administrators.",
+        details: [
+          "Your HOD application has been submitted successfully",
+          "College administrators are reviewing your qualifications",
+          "Your academic credentials and experience are being verified",
+          "You will be notified once the review is complete",
+          "Upon approval, you will be assigned to a department"
+        ],
+        icon: Building
+      };
+    }
+
     return {
       title: "Account Approval Pending",
       description: "Your account is pending approval from the administration.",
@@ -90,6 +105,19 @@ export const PendingApproval: React.FC = () => {
                   <p><strong>Registered as:</strong> College Administrator</p>
                   <p><strong>Status:</strong> Awaiting Super Admin Approval</p>
                   <p><strong>Account:</strong> {profile.name}</p>
+                </div>
+              </div>
+            )}
+
+            {profile?.is_hod && profile?.pending_approval && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <h4 className="font-semibold text-purple-800 mb-2">HOD Application Details</h4>
+                <div className="text-sm text-purple-700 space-y-1">
+                  <p><strong>Position:</strong> Head of Department</p>
+                  <p><strong>Status:</strong> Under Review</p>
+                  <p><strong>Applicant:</strong> {profile.name}</p>
+                  {profile.qualification && <p><strong>Qualification:</strong> {profile.qualification}</p>}
+                  {profile.experience && <p><strong>Experience:</strong> {profile.experience}</p>}
                 </div>
               </div>
             )}

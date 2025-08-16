@@ -935,6 +935,14 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      assign_hod_to_department: {
+        Args: {
+          p_approver_id: string
+          p_department_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       create_college_admin_request: {
         Args: {
           p_admin_email: string
