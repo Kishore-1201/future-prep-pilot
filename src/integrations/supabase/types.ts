@@ -736,56 +736,74 @@ export type Database = {
         Row: {
           account_type: string | null
           college_id: string | null
+          course: string | null
           created_at: string
           department: string | null
           department_id: string | null
           detailed_role: string | null
           employee_id: string | null
+          experience: string | null
           google_auth_id: string | null
+          hod_details: string | null
           id: string
           is_active: boolean
+          is_hod: boolean | null
           name: string
           pending_approval: boolean | null
+          qualification: string | null
           role: Database["public"]["Enums"]["app_role"]
           room_id: string | null
           student_id: string | null
           updated_at: string
+          year: string | null
         }
         Insert: {
           account_type?: string | null
           college_id?: string | null
+          course?: string | null
           created_at?: string
           department?: string | null
           department_id?: string | null
           detailed_role?: string | null
           employee_id?: string | null
+          experience?: string | null
           google_auth_id?: string | null
+          hod_details?: string | null
           id: string
           is_active?: boolean
+          is_hod?: boolean | null
           name: string
           pending_approval?: boolean | null
+          qualification?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           room_id?: string | null
           student_id?: string | null
           updated_at?: string
+          year?: string | null
         }
         Update: {
           account_type?: string | null
           college_id?: string | null
+          course?: string | null
           created_at?: string
           department?: string | null
           department_id?: string | null
           detailed_role?: string | null
           employee_id?: string | null
+          experience?: string | null
           google_auth_id?: string | null
+          hod_details?: string | null
           id?: string
           is_active?: boolean
+          is_hod?: boolean | null
           name?: string
           pending_approval?: boolean | null
+          qualification?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           room_id?: string | null
           student_id?: string | null
           updated_at?: string
+          year?: string | null
         }
         Relationships: [
           {
@@ -913,6 +931,10 @@ export type Database = {
         Args: { approver_id: string; join_id: string }
         Returns: boolean
       }
+      approve_hod_request: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
       create_college_admin_request: {
         Args: {
           p_admin_email: string
@@ -977,6 +999,20 @@ export type Database = {
           total_students: number
           total_teachers: number
           total_users: number
+        }[]
+      }
+      get_hod_requests: {
+        Args: { college_uuid?: string }
+        Returns: {
+          college_name: string
+          created_at: string
+          email: string
+          employee_id: string
+          experience: string
+          hod_details: string
+          id: string
+          name: string
+          qualification: string
         }[]
       }
       get_super_admin_stats: {
