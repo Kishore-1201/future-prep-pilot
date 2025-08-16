@@ -88,9 +88,9 @@ export const DepartmentJoin: React.FC = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.rpc('join_department_with_code', {
-        user_id: profile.id,
-        join_code: joinCode,
-        user_role: profile.role
+        p_user_id: profile.id,
+        p_join_code: joinCode,
+        p_user_role: profile.role
       });
 
       if (error) throw error;

@@ -928,7 +928,7 @@ export type Database = {
         Returns: boolean
       }
       approve_department_join: {
-        Args: { approver_id: string; join_id: string }
+        Args: { p_approver_id: string; p_join_id: string }
         Returns: boolean
       }
       approve_hod_request: {
@@ -1028,7 +1028,7 @@ export type Database = {
         Returns: Json
       }
       join_department_with_code: {
-        Args: { join_code: string; user_id: string; user_role: string }
+        Args: { p_join_code: string; p_user_id: string; p_user_role: string }
         Returns: boolean
       }
       reject_college_admin_request: {

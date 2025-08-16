@@ -239,9 +239,17 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
     }
   };
 
-  const fillDemoCredentials = (userType: 'student' | 'teacher' | 'admin') => {
-    setEmail(`${userType}@campus.edu`);
-    setPassword(`${userType}123`);
+  const fillDemoCredentials = (userType: 'student' | 'teacher' | 'hod' | 'admin' | 'college_admin') => {
+    const credentials = {
+      student: { email: 'jefiw69904@jobzyy.com', password: 'Kishore@2006' },
+      teacher: { email: 'xiyoceg300@futebr.com', password: 'Kishore@2006' },
+      hod: { email: 'diwav19183@mardiek.com', password: 'Kishore@2006' },
+      admin: { email: 'neroj59270@futebr.com', password: 'Kishore@2006' },
+      college_admin: { email: 'cetesan717@jobzyy.com', password: 'Kishore@2006' }
+    };
+    
+    setEmail(credentials[userType].email);
+    setPassword(credentials[userType].password);
     setIsLogin(true);
   };
 
@@ -480,27 +488,41 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
                 
                 <div className="pt-2 border-t">
                   <p className="text-xs text-muted-foreground mb-2">Quick Demo Access:</p>
-                  <div className="grid grid-cols-3 gap-1 text-xs">
+                  <div className="grid grid-cols-2 gap-1 text-xs">
                     <button
                       type="button"
                       onClick={() => fillDemoCredentials('student')}
                       className="px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100"
                     >
-                      Student
+                      👨‍🎓 Student
                     </button>
                     <button
                       type="button"
                       onClick={() => fillDemoCredentials('teacher')}
                       className="px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100"
                     >
-                      Teacher
+                      👨‍🏫 Teacher
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fillDemoCredentials('hod')}
+                      className="px-2 py-1 bg-yellow-50 text-yellow-700 rounded hover:bg-yellow-100"
+                    >
+                      👑 HOD
                     </button>
                     <button
                       type="button"
                       onClick={() => fillDemoCredentials('admin')}
                       className="px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100"
                     >
-                      Admin
+                      🛡️ Admin
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fillDemoCredentials('college_admin')}
+                      className="px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 col-span-2"
+                    >
+                      🏛️ College Admin
                     </button>
                   </div>
                 </div>
