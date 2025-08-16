@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { DepartmentCard } from '@/components/DepartmentCard';
+import { HODRequestsTab } from '@/components/HODRequestsTab';
 
 interface Department {
   id: string;
@@ -335,10 +336,11 @@ export const CollegeAdminDashboard: React.FC = () => {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="departments">Departments</TabsTrigger>
-          <TabsTrigger value="rooms">Department Rooms</TabsTrigger>
+          <TabsTrigger value="hod-requests">HOD Requests</TabsTrigger>
+          <TabsTrigger value="rooms">Rooms</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>

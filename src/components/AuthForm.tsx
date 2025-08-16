@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Mail, Lock, User, LogIn, UserPlus, Brain } from 'lucide-react';
 
@@ -19,6 +21,16 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
   const [name, setName] = useState('');
   const [role, setRole] = useState<'student' | 'teacher' | 'admin'>('student');
   const [loading, setLoading] = useState(false);
+  
+  // HOD specific fields
+  const [isHOD, setIsHOD] = useState(false);
+  const [hodDetails, setHodDetails] = useState({
+    employee_id: '',
+    qualification: '',
+    experience: '',
+    department_preference: '',
+    achievements: ''
+  });
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +64,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
               name: name,
               role: role,
               full_name: name,
-              user_role: role // Additional field for the trigger
+              user_role: role,
+              // HOD specific data
+              is_hod: isHOD,
+              employee_id: hodDetails.employee_id,
+              qualification: hodDetails.qualification,
+              experience: hodDetails.experience,
+              hod_details: isHOD ? `Department Preference: ${hodDetails.department_preference}\nAchievements: ${hodDetails.achievements}` : undefined
             }
           }
         };
@@ -286,23 +304,111 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
             </div>
 
             {!isLogin && (
-              <div>
-                <Select value={role} onValueChange={(value: 'student' | 'teacher' | 'admin') => {
-                  setRole(value);
-                  console.log('Role selected:', value);
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="teacher">Teacher</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Selected role: <span className="font-semibold capitalize">{role}</span>
-                </p>
+              <div className="space-y-4">
+                <div>
+                  <Select value={role} onValueChange={(value: 'student' | 'teacher' | 'admin') => {
+                    setRole(value);
+                    setIsHOD(false); // Reset HOD when role changes
+                    console.log('Role selected:', value);
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="teacher">Teacher</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Selected role: <span className="font-semibold capitalize">{role}</span>
+                  </p>
+                </div>
+
+                {role === 'teacher' && (
+                  <div className="space-y-3 p-3 border rounded-lg bg-muted/50">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="hod-checkbox"
+                        checked={isHOD}
+                        onChange={(e) => setIsHOD(e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      <label htmlFor="hod-checkbox" className="text-sm font-medium">
+                        Apply as Head of Department (HOD)
+                      </label>
+                    </div>
+                    
+                    {isHOD && (
+                      <div className="space-y-3 mt-3 p-3 border rounded bg-background">
+                        <p className="text-xs text-muted-foreground">
+                          Additional verification details required for HOD position
+                        </p>
+                        
+                        <div>
+                          <Label htmlFor="employee-id" className="text-xs">Employee ID</Label>
+                          <Input
+                            id="employee-id"
+                            value={hodDetails.employee_id}
+                            onChange={(e) => setHodDetails(prev => ({ ...prev, employee_id: e.target.value }))}
+                            placeholder="Your employee ID"
+                            className="h-8 text-sm"
+                            required={isHOD}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="qualification" className="text-xs">Highest Qualification</Label>
+                          <Input
+                            id="qualification"
+                            value={hodDetails.qualification}
+                            onChange={(e) => setHodDetails(prev => ({ ...prev, qualification: e.target.value }))}
+                            placeholder="e.g., Ph.D in Computer Science"
+                            className="h-8 text-sm"
+                            required={isHOD}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="experience" className="text-xs">Years of Experience</Label>
+                          <Input
+                            id="experience"
+                            value={hodDetails.experience}
+                            onChange={(e) => setHodDetails(prev => ({ ...prev, experience: e.target.value }))}
+                            placeholder="e.g., 10+ years in academia"
+                            className="h-8 text-sm"
+                            required={isHOD}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="dept-preference" className="text-xs">Department Preference</Label>
+                          <Input
+                            id="dept-preference"
+                            value={hodDetails.department_preference}
+                            onChange={(e) => setHodDetails(prev => ({ ...prev, department_preference: e.target.value }))}
+                            placeholder="e.g., Computer Science & Engineering"
+                            className="h-8 text-sm"
+                            required={isHOD}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="achievements" className="text-xs">Key Achievements</Label>
+                          <Textarea
+                            id="achievements"
+                            value={hodDetails.achievements}
+                            onChange={(e) => setHodDetails(prev => ({ ...prev, achievements: e.target.value }))}
+                            placeholder="Research papers, awards, leadership experience..."
+                            className="text-sm min-h-[60px]"
+                            required={isHOD}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
